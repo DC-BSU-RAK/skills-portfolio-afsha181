@@ -1,0 +1,150 @@
+import tkinter as tk
+from tkinter import messagebox
+import random
+
+# ----------------------- FUNCTIONS -----------------------
+
+def displayMenu():
+    """Display the difficulty level menu"""
+    clear_window()
+    tk.Label(root, text="DIFFICULTY LEVEL", font=("Arial", 16, "bold")).pack(pady=10)
+    tk.Button(root, text="1. Easy", width=15, command=lambda: start_quiz('easy')).pack(pady=5)
+    tk.Button(root, text="2. Moderate", width=15, command=lambda: start_quiz('moderate')).pack(pady=5)
+    tk.Button(root, text="3. Advanced", width=15, command=lambda: start_quiz('advanced')).pack(pady=5)
+
+
+def randomInt(level):
+    """Return random integers based on difficulty level"""
+    if level == 'easy':
+        return random.randint(1, 9)
+    elif level == 'moderate':
+        return random.randint(10, 99)
+    elif level == 'advanced':
+        return random.randint(1000, 9999)
+
+
+def decideOperation():
+    """Randomly choose addition or subtraction"""
+    return random.choice(['+', '-'])
+
+
+def displayProblem():
+    """Display a new arithmetic problem"""
+    global num1, num2, op, answer_attempts, question_label, answer_entry
+
+    num1 = randomInt(difficulty)
+    num2 = randomInt(difficulty)
+    op = decideOperation()
+
+    clear_window()
+
+    tk.Label(root, text=f"Question {current_question}/10", font=("Arial", 14, "bold")).pack(pady=5)
+
+    question_label = tk.Label(root, text=f"{num1} {op} {num2} = ?", font=("Arial", 18))
+    question_label.pack(pady=10)
+
+    answer_entry = tk.Entry(root, font=("Arial", 14))
+    answer_entry.pack(pady=5)
+    answer_entry.focus()
+
+    tk.Button(root, text="Submit", command=checkAnswer).pack(pady=10)
+
+
+def isCorrect(user_answer, correct_answer):
+    """Check if user's answer is correct"""
+    return user_answer == correct_answer
+
+
+def checkAnswer():
+    """Check user input and manage score and attempts"""
+    global score, current_question, answer_attempts
+
+    try:
+        user_answer = int(answer_entry.get())
+    except ValueError:
+        messagebox.showwarning("Invalid Input", "Please enter a valid number!")
+        return
+
+    correct_answer = eval(f"{num1}{op}{num2}")
+
+    if isCorrect(user_answer, correct_answer):
+        if answer_attempts == 0:
+            score += 10
+            messagebox.showinfo("Correct!", "Excellent! +10 points.")
+        else:
+            score += 5
+            messagebox.showinfo("Correct!", "Good! +5 points.")
+        next_question()
+    else:
+        if answer_attempts == 0:
+            answer_attempts += 1
+            messagebox.showwarning("Incorrect", "Try again!")
+        else:
+            messagebox.showinfo("Wrong", f"Wrong again! The correct answer was {correct_answer}.")
+            next_question()
+
+
+def next_question():
+    """Proceed to next question or finish quiz"""
+    global current_question, answer_attempts
+
+    current_question += 1
+    answer_attempts = 0
+
+    if current_question <= 10:
+        displayProblem()
+    else:
+        displayResults()
+
+
+def displayResults():
+    """Show final score and rank"""
+    clear_window()
+
+    tk.Label(root, text="Quiz Complete!", font=("Arial", 18, "bold")).pack(pady=10)
+    tk.Label(root, text=f"Your Final Score: {score}/100", font=("Arial", 16)).pack(pady=10)
+
+    # Rank based on score
+    if score >= 90:
+        rank = "A+"
+    elif score >= 80:
+        rank = "A"
+    elif score >= 70:
+        rank = "B"
+    elif score >= 60:
+        rank = "C"
+    else:
+        rank = "Needs Improvement"
+
+    tk.Label(root, text=f"Your Rank: {rank}", font=("Arial", 14, "italic")).pack(pady=10)
+
+    tk.Button(root, text="Play Again", command=displayMenu).pack(pady=5)
+    tk.Button(root, text="Exit", command=root.quit).pack(pady=5)
+
+
+def start_quiz(level):
+    """Initialize quiz variables and start"""
+    global difficulty, score, current_question, answer_attempts
+    difficulty = level
+    score = 0
+    current_question = 1
+    answer_attempts = 0
+    displayProblem()
+
+
+def clear_window():
+    """Utility function to clear window"""
+    for widget in root.winfo_children():
+        widget.destroy()
+
+
+# ----------------------- MAIN GUI SETUP -----------------------
+root = tk.Tk()
+root.title("Maths Quiz")
+root.geometry("400x350")
+root.resizable(False, False)
+
+# Start with difficulty selection
+displayMenu()
+
+root.mainloop()
